@@ -29,7 +29,7 @@ function barClass(pct, t1, t2) {
 function pctColor(pct, t1, t2) {
   if (pct >= t2) return '#ef4444';
   if (pct >= t1) return '#f59e0b';
-  return '#111';
+  return '#3b82f6';
 }
 
 function renderUsageRow(key, entry, t1, t2, isBurning) {
