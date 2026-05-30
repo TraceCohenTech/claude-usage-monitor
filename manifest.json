@@ -3,7 +3,7 @@
   "name": "Claude Usage Monitor",
   "short_name": "Claude Usage",
   "version": "2.1.0",
-  "description": "Never lose work mid-prompt. Live usage bars, burn-rate warnings & history for Claude.ai. 100% local — no data leaves your browser.",
+  "description": "Never lose work mid-prompt. Live Claude.ai usage bars, burn-rate alerts & runway. History heatmap. 100% local — no data ever sent.",
   "author": "Trace Cohen",
   "homepage_url": "https://valueaddvc.com/claude-monitor",
   "permissions": ["storage", "notifications", "alarms", "tabs", "offscreen"],
