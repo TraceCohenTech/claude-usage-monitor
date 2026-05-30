@@ -289,4 +289,9 @@ document.getElementById('btn-refresh').addEventListener('click', () => {
   window.close();
 });
 
+document.getElementById('btn-feedback').addEventListener('click', () => {
+  chrome.tabs.create({ url: 'https://github.com/TraceCohenTech/claude-usage-monitor/issues/new' });
+  window.close();
+});
+
 render();

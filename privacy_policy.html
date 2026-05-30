@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Privacy Policy — Claude Usage Monitor</title>
+  <style>
+    body {
+      max-width: 680px;
+      margin: 60px auto;
+      padding: 0 24px 80px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: 15px;
+      line-height: 1.7;
+      color: #222;
+    }
+    h1 { font-size: 26px; font-weight: 700; margin-bottom: 4px; }
+    h2 { font-size: 17px; font-weight: 600; margin-top: 36px; color: #111; }
+    .meta { color: #888; font-size: 13px; margin-bottom: 36px; }
+    a { color: #3b82f6; }
+    ul { padding-left: 20px; }
+    li { margin-bottom: 6px; }
+    .highlight {
+      background: #f0fdf4;
+      border-left: 4px solid #22c55e;
+      padding: 14px 18px;
+      border-radius: 4px;
+      margin: 24px 0;
+      font-weight: 500;
+    }
+  </style>
+</head>
+<body>
+  <h1>Privacy Policy</h1>
+  <div class="meta">Claude Usage Monitor · Last updated May 2025 · Author: Trace Cohen</div>
+
+  <div class="highlight">
+    TL;DR: This extension collects nothing. All data stays in your browser. No servers, no tracking, no ads.
+  </div>
+
+  <h2>What data does the extension access?</h2>
+  <p>Claude Usage Monitor reads your Claude.ai usage percentages (e.g. "72% used") and reset times from the <strong>claude.ai/settings/usage</strong> page that you have already opened in your browser. It reads these values by observing the page you're already viewing — the same way you would read them yourself.</p>
+
+  <h2>Where does that data go?</h2>
+  <p>Nowhere outside your device. All usage data is stored exclusively in <strong>chrome.storage.local</strong> — a sandboxed, browser-local store that only this extension can read. It is never:</p>
+  <ul>
+    <li>Uploaded to any server</li>
+    <li>Sent to the extension developer</li>
+    <li>Shared with third parties</li>
+    <li>Used for analytics or advertising</li>
+  </ul>
+
+  <h2>Optional local server (SwiftBar / menu bar)</h2>
+  <p>If you choose to install the optional local Python server for menu bar support, data is sent over <strong>localhost (127.0.0.1:39571)</strong> only — it never leaves your machine. This component is entirely optional and is not installed by default.</p>
+
+  <h2>Permissions and why they're needed</h2>
+  <ul>
+    <li><strong>storage</strong> — saves your usage history and preferences locally in the browser</li>
+    <li><strong>notifications</strong> — shows desktop alerts when you approach a limit</li>
+    <li><strong>alarms</strong> — schedules periodic background checks (every 5–20 min)</li>
+    <li><strong>tabs</strong> — opens a silent background tab to refresh usage data; reads tab URLs to avoid duplicate opens</li>
+    <li><strong>offscreen</strong> — plays an optional audio beep warning using the Web Audio API</li>
+    <li><strong>host permission: claude.ai</strong> — needed to read the usage page and show the in-page warning banner</li>
+    <li><strong>host permission: localhost:39571</strong> — optional; only used if you run the local menu bar server</li>
+  </ul>
+
+  <h2>No accounts, no sign-in</h2>
+  <p>The extension requires no account, no login, and no personal information of any kind. It works entirely offline after installation.</p>
+
+  <h2>Open source</h2>
+  <p>The full source code is publicly available at <a href="https://github.com/tracecohen/claude-usage-monitor">github.com/tracecohen/claude-usage-monitor</a>. You can audit exactly what the extension does.</p>
+
+  <h2>Contact</h2>
+  <p>Built by <strong>Trace Cohen</strong>. Questions or concerns: <a href="mailto:t@nyvp.com">t@nyvp.com</a></p>
+</body>
+</html>

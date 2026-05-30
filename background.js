@@ -14,6 +14,7 @@ chrome.runtime.onInstalled.addListener(async ({ reason }) => {
       rateWarningEnabled: true,
       rateWarningMinutes: 60,
     });
+    chrome.tabs.create({ url: chrome.runtime.getURL('options.html?welcome=1') });
   }
   chrome.alarms.clearAll();
   // High-frequency alarm: only polls when usage ≥ 60%

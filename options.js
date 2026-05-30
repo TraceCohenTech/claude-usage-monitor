@@ -8,12 +8,20 @@ const DEFAULTS = {
 
 const $ = (id) => document.getElementById(id);
 
+// ── Welcome banner ────────────────────────────────────────────────────────────
+
+const params = new URLSearchParams(location.search);
+if (params.get('welcome') === '1') {
+  $('welcome').classList.add('visible');
+}
+
+// ── Settings ──────────────────────────────────────────────────────────────────
+
 function toggleRateDetails() {
   const enabled = $('rateWarningEnabled').checked;
   $('rate-details').classList.toggle('visible', enabled);
 }
 
-// Load saved settings
 chrome.storage.sync.get(DEFAULTS, (prefs) => {
   $('threshold1').value           = prefs.threshold1;
   $('threshold2').value           = prefs.threshold2;
@@ -44,5 +52,43 @@ $('save').addEventListener('click', () => {
     const msg = $('saved-msg');
     msg.classList.add('visible');
     setTimeout(() => msg.classList.remove('visible'), 2500);
+  });
+});
+
+// ── Email subscribe ───────────────────────────────────────────────────────────
+
+chrome.storage.local.get('subscribedEmail', ({ subscribedEmail }) => {
+  if (subscribedEmail) {
+    $('email-input').value = subscribedEmail;
+    $('subscribed-msg').classList.add('visible');
+    $('btn-subscribe').disabled = true;
+    $('btn-subscribe').textContent = 'Subscribed ✓';
+  }
+});
+
+$('btn-subscribe').addEventListener('click', () => {
+  const email = $('email-input').value.trim();
+  if (!email || !email.includes('@')) {
+    $('email-input').focus();
+    return;
+  }
+
+  chrome.storage.local.set({ subscribedEmail: email });
+
+  // Open mailto so the user's email lands in your inbox
+  const subject = encodeURIComponent('Claude Usage Monitor — subscribe me to updates');
+  const body = encodeURIComponent(`Email: ${email}\n\nPlease add me to the Claude Usage Monitor update list.`);
+  window.open(`mailto:t@nyvp.com?subject=${subject}&body=${body}`);
+
+  $('subscribed-msg').classList.add('visible');
+  $('btn-subscribe').disabled = true;
+  $('btn-subscribe').textContent = 'Subscribed ✓';
+});
+
+// Open feedback links in a new tab (extensions block target=_blank)
+['link-bug', 'link-feature'].forEach(id => {
+  $(id)?.addEventListener('click', (e) => {
+    e.preventDefault();
+    chrome.tabs.create({ url: e.currentTarget.href });
   });
 });
