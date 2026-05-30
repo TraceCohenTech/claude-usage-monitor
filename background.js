@@ -5,11 +5,8 @@ const MAX_HISTORY = 288; // 24h at 5-min granularity
 // ── Lifecycle ─────────────────────────────────────────────────────────────────
 
 function ensureAlarms() {
-  chrome.alarms.get('refreshHigh', (a) => {
-    if (!a) chrome.alarms.create('refreshHigh', { periodInMinutes: 5 });
-  });
-  chrome.alarms.get('refreshLow', (a) => {
-    if (!a) chrome.alarms.create('refreshLow', { periodInMinutes: 20 });
+  chrome.alarms.get('refresh', (a) => {
+    if (!a) chrome.alarms.create('refresh', { periodInMinutes: 5 });
   });
 }
 
@@ -37,10 +34,7 @@ chrome.runtime.onStartup.addListener(() => {
 // ── Alarms (adaptive polling + deferred cleanup) ──────────────────────────────
 
 chrome.alarms.onAlarm.addListener(async (alarm) => {
-  if (alarm.name === 'refreshHigh') {
-    const { usage } = await chrome.storage.local.get('usage');
-    if ((getMax(usage) ?? 0) >= 60) await pollClaudeUsage();
-  } else if (alarm.name === 'refreshLow') {
+  if (alarm.name === 'refresh') {
     await pollClaudeUsage();
   } else if (alarm.name.startsWith('closeTab_')) {
     const tabId = parseInt(alarm.name.split('_')[1], 10);
@@ -65,6 +59,8 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     Promise.all([chrome.storage.local.get('usage'), getPrefs()])
       .then(([local, prefs]) => sendResponse({ usage: local.usage || {}, prefs }));
     return true; // async
+  } else if (msg.type === 'REFRESH') {
+    pollClaudeUsage();
   }
 });
 

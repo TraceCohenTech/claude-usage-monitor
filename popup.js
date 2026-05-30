@@ -294,4 +294,6 @@ document.getElementById('btn-feedback').addEventListener('click', () => {
   window.close();
 });
 
+// Trigger a fresh scrape every time the popup opens
+chrome.runtime.sendMessage({ type: 'REFRESH' });
 render();
