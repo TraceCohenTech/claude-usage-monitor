@@ -1,5 +1,5 @@
 // Replace with your Formspree form ID — sign up free at formspree.io
-const FORMSPREE_URL = 'https://formspree.io/f/REPLACE_WITH_YOUR_FORM_ID';
+const FORMSPREE_URL = 'https://formspree.io/f/xwvzzwwz';
 
 const DEFAULTS = {
   threshold1: 75,

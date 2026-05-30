@@ -1,7 +1,7 @@
 const ICON = chrome.runtime.getURL('icons/icon128.png');
 const MENU_BAR_URL = 'http://localhost:39571/usage';
 // Replace with your Formspree form ID — must match options.js
-const FORMSPREE_URL = 'https://formspree.io/f/REPLACE_WITH_YOUR_FORM_ID';
+const FORMSPREE_URL = 'https://formspree.io/f/xwvzzwwz';
 const MAX_HISTORY = 288; // 24h at 5-min granularity
 
 // ── Lifecycle ─────────────────────────────────────────────────────────────────
