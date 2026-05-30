@@ -1,6 +1,7 @@
 const ICON = chrome.runtime.getURL('icons/icon128.png');
 const MENU_BAR_URL = 'http://localhost:39571/usage';
 const MAX_HISTORY = 288; // 24h at 5-min granularity
+const KNOWN_KEYS = new Set(['session', 'allModels', 'sonnet', 'opus']);
 
 // ── Lifecycle ─────────────────────────────────────────────────────────────────
 
@@ -29,6 +30,16 @@ chrome.runtime.onInstalled.addListener(async ({ reason }) => {
 // Re-register alarms after browser restarts (service worker wakes fresh)
 chrome.runtime.onStartup.addListener(() => {
   ensureAlarms();
+});
+
+// Clean up any stale noise keys left in storage from old versions
+chrome.storage.local.get('usage', ({ usage }) => {
+  if (!usage) return;
+  const dirty = Object.keys(usage).some(k => !KNOWN_KEYS.has(k));
+  if (!dirty) return;
+  const clean = {};
+  for (const k of KNOWN_KEYS) { if (usage[k]) clean[k] = usage[k]; }
+  chrome.storage.local.set({ usage: clean });
 });
 
 // ── Alarms (adaptive polling + deferred cleanup) ──────────────────────────────
@@ -78,6 +89,12 @@ async function handleUsageUpdate(incoming, source) {
   const { usage: existing = {}, history = [] } = await chrome.storage.local.get(['usage', 'history']);
 
   const merged = mergeUsage(normalized, existing, source);
+
+  // Strip any noise keys — only keep known usage keys
+  for (const k of Object.keys(merged)) {
+    if (!KNOWN_KEYS.has(k)) delete merged[k];
+  }
+
   const maxPct = getMax(merged) ?? 0;
 
   const newHistory = [

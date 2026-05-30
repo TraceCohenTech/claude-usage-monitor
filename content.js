@@ -48,8 +48,8 @@ function parseUsageFromDOM() {
     let label = `limit_${Object.keys(result).length}`;
     let reset = null;
 
-    // Scan backwards for the section label
-    for (let j = i - 1; j >= Math.max(0, i - 14); j--) {
+    // Scan backwards for the section label (wide window — SVG icons add many nodes)
+    for (let j = i - 1; j >= Math.max(0, i - 40); j--) {
       const t = nodes[j].textContent.trim().toLowerCase();
       if (t.includes('current session')) { label = 'session'; break; }
       if (t.includes('all model'))       { label = 'allModels'; break; }
