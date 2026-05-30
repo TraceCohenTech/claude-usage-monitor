@@ -5,6 +5,10 @@ const LABEL = {
   opus:      'Opus',
 };
 
+function esc(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
 function getPct(entry) {
   return typeof entry === 'number' ? entry : (entry?.pct ?? 0);
 }
@@ -33,7 +37,7 @@ function renderUsageRow(key, entry, t1, t2, isBurning) {
   const reset = getReset(entry);
   const cls = barClass(pct, t1, t2);
   const col = pctColor(pct, t1, t2);
-  const name = LABEL[key] || key;
+  const name = esc(LABEL[key] || key);
   const burnIcon = isBurning ? `<span class="burn-icon">⚡</span>` : '';
 
   return `
@@ -48,8 +52,89 @@ function renderUsageRow(key, entry, t1, t2, isBurning) {
       <div class="bar-track">
         <div class="bar-fill ${cls}" style="width:${Math.min(pct,100)}%"></div>
       </div>
-      ${reset ? `<div class="reset-time">${reset}</div>` : ''}
+      ${reset ? `<div class="reset-time">${esc(reset)}</div>` : ''}
     </div>`;
+}
+
+// ── Runway calculator ─────────────────────────────────────────────────────────
+
+function parseResetMins(text) {
+  if (!text) return null;
+  const hrMin = text.match(/(\d+)\s*hr(?:\s*(\d+)\s*min)?/i);
+  if (hrMin) return parseInt(hrMin[1]) * 60 + (hrMin[2] ? parseInt(hrMin[2]) : 0);
+  const min = text.match(/(\d+)\s*min/i);
+  if (min) return parseInt(min[1]);
+  if (/mon|tue|wed|thu|fri|sat|sun/i.test(text)) return 7 * 24 * 60;
+  return null;
+}
+
+function buildRunway(usage, history, t2) {
+  if (!history || history.length < 4) return `<div class="runway-empty">Not enough data yet</div>`;
+
+  const now = Date.now();
+  const recent = history.filter(h => now - h.timestamp < 2 * 3_600_000);
+  if (recent.length < 2) return `<div class="runway-empty">Not enough recent activity</div>`;
+
+  const elapsedHrs = (recent[recent.length - 1].timestamp - recent[0].timestamp) / 3_600_000;
+  if (elapsedHrs < 0.05) return `<div class="runway-empty">Not enough data yet</div>`;
+
+  const ratePerHour = (recent[recent.length - 1].maxPct - recent[0].maxPct) / elapsedHrs;
+  if (ratePerHour <= 0) return `<div class="runway-row"><span class="runway-rate">+0%/hr</span><span class="runway-ok">✓ Not burning</span></div>`;
+
+  const rateStr = `+${ratePerHour.toFixed(1)}%/hr`;
+  let minMins = Infinity, minLabel = '', safeReset = false;
+
+  for (const k of ['session', 'allModels', 'sonnet', 'opus']) {
+    if (!usage[k]) continue;
+    const pct = getPct(usage[k]);
+    const resetMins = parseResetMins(getReset(usage[k]));
+    const toThreshold = (t2 - pct) / ratePerHour * 60;
+    const runway = resetMins != null ? Math.min(toThreshold, resetMins) : toThreshold;
+    if (runway < minMins) {
+      minMins = runway; minLabel = LABEL[k] || k;
+      safeReset = resetMins != null && resetMins <= toThreshold;
+    }
+  }
+
+  if (!minLabel) return `<div class="runway-empty">No data</div>`;
+  if (safeReset) return `<div class="runway-row"><span class="runway-rate">${rateStr}</span><span class="runway-ok">✓ Resets before limit</span></div>`;
+
+  const h = Math.floor(minMins / 60), m = Math.round(minMins % 60);
+  const timeStr = h > 0 ? `${h}h ${m}m` : `${m}m`;
+  const low = minMins < 60;
+  return `<div class="runway-row"><span class="runway-rate">${rateStr} · ${minLabel}</span><span class="runway-time${low ? ' runway-low' : ''}">~${timeStr} left</span></div>`;
+}
+
+// ── Heatmap ───────────────────────────────────────────────────────────────────
+
+function buildHeatmap(history) {
+  if (!history || history.length < 10) return `<div class="spark-empty">Not enough data yet</div>`;
+
+  const buckets = new Array(24).fill(0), counts = new Array(24).fill(0);
+  for (let i = 1; i < history.length; i++) {
+    const gap = history[i].timestamp - history[i - 1].timestamp;
+    if (gap > 3_600_000) continue;
+    const delta = Math.max(0, history[i].maxPct - history[i - 1].maxPct);
+    const hr = new Date(history[i].timestamp).getHours();
+    buckets[hr] += delta; counts[hr]++;
+  }
+
+  const avgs = buckets.map((t, h) => ({ h, avg: counts[h] > 0 ? t / counts[h] : 0, n: counts[h] }));
+  const peak = Math.max(...avgs.map(a => a.avg), 0.01);
+  const CW = 10, GAP = 1, H = 20;
+
+  const cells = avgs.map(({ h, avg, n }) => {
+    const intensity = avg / peak;
+    const op = n > 0 ? (0.1 + intensity * 0.85).toFixed(2) : '0.06';
+    const col = intensity > 0.65 ? '#ef4444' : intensity > 0.35 ? '#f59e0b' : '#3b82f6';
+    const x = h * (CW + GAP);
+    const lbl = h === 0 ? '12a' : h === 6 ? '6a' : h === 12 ? '12p' : h === 18 ? '6p' : '';
+    return `<rect x="${x}" y="0" width="${CW}" height="${H}" fill="${col}" opacity="${op}" rx="2"/>`
+      + (lbl ? `<text x="${x + 5}" y="${H + 9}" text-anchor="middle" font-size="7.5" fill="#bbb">${lbl}</text>` : '');
+  }).join('');
+
+  const W = 24 * (CW + GAP) - GAP;
+  return `<svg width="${W}" height="${H + 12}" style="display:block">${cells}</svg>`;
 }
 
 function buildSparkline(history) {
@@ -151,6 +236,13 @@ function render() {
         html += `</div>`;
       }
 
+      // Runway
+      html += `<hr class="divider">
+        <div class="runway-section">
+          <div class="section-title">Runway</div>
+          ${buildRunway(usage, history, t2)}
+        </div>`;
+
       // Sparkline
       if (history.length >= 2) {
         html += `<hr class="divider">
@@ -159,6 +251,13 @@ function render() {
             ${buildSparkline(history.slice(-48))}
           </div>`;
       }
+
+      // Heatmap
+      html += `<hr class="divider">
+        <div class="heatmap-section">
+          <div class="section-title">Busiest Hours</div>
+          ${buildHeatmap(history)}
+        </div>`;
 
       root.innerHTML = html;
 

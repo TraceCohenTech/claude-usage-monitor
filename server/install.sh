@@ -10,9 +10,9 @@ PLIST_SRC="$SCRIPT_DIR/com.claude.usage-monitor.plist"
 PLIST_DEST="$HOME/Library/LaunchAgents/com.claude.usage-monitor.plist"
 
 # ── 1. Copy server script ───────────────────────────────────────────────────
-mkdir -p "$HOME/.claude-usage-monitor"
+mkdir -p -m 700 "$HOME/.claude-usage-monitor"
 cp "$SCRIPT_DIR/claude-usage-server.py" "$SERVER_DEST"
-chmod +x "$SERVER_DEST"
+chmod 700 "$SERVER_DEST"
 echo "✓ Server script installed to $SERVER_DEST"
 
 # ── 2. Create LaunchAgent plist ─────────────────────────────────────────────
@@ -33,9 +33,9 @@ cat > "$PLIST_DEST" << PLIST
   <key>KeepAlive</key>
   <true/>
   <key>StandardErrorPath</key>
-  <string>/tmp/claude-usage-server.log</string>
+  <string>${HOME}/.claude-usage-monitor/server.log</string>
   <key>StandardOutPath</key>
-  <string>/tmp/claude-usage-server.log</string>
+  <string>${HOME}/.claude-usage-monitor/server.log</string>
 </dict>
 </plist>
 PLIST
