@@ -1,5 +1,7 @@
 const ICON = chrome.runtime.getURL('icons/icon128.png');
 const MENU_BAR_URL = 'http://localhost:39571/usage';
+// Replace with your Formspree form ID — must match options.js
+const FORMSPREE_URL = 'https://formspree.io/f/REPLACE_WITH_YOUR_FORM_ID';
 const MAX_HISTORY = 288; // 24h at 5-min granularity
 
 // ── Lifecycle ─────────────────────────────────────────────────────────────────
@@ -15,6 +17,12 @@ chrome.runtime.onInstalled.addListener(async ({ reason }) => {
       rateWarningMinutes: 60,
     });
     chrome.tabs.create({ url: chrome.runtime.getURL('options.html?welcome=1') });
+    // Notify on every new install
+    fetch(FORMSPREE_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify({ type: 'install', timestamp: new Date().toISOString() }),
+    }).catch(() => {});
   }
   chrome.alarms.clearAll();
   // High-frequency alarm: only polls when usage ≥ 60%

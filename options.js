@@ -1,3 +1,6 @@
+// Replace with your Formspree form ID — sign up free at formspree.io
+const FORMSPREE_URL = 'https://formspree.io/f/REPLACE_WITH_YOUR_FORM_ID';
+
 const DEFAULTS = {
   threshold1: 75,
   threshold2: 90,
@@ -10,16 +13,14 @@ const $ = (id) => document.getElementById(id);
 
 // ── Welcome banner ────────────────────────────────────────────────────────────
 
-const params = new URLSearchParams(location.search);
-if (params.get('welcome') === '1') {
+if (new URLSearchParams(location.search).get('welcome') === '1') {
   $('welcome').classList.add('visible');
 }
 
 // ── Settings ──────────────────────────────────────────────────────────────────
 
 function toggleRateDetails() {
-  const enabled = $('rateWarningEnabled').checked;
-  $('rate-details').classList.toggle('visible', enabled);
+  $('rate-details').classList.toggle('visible', $('rateWarningEnabled').checked);
 }
 
 chrome.storage.sync.get(DEFAULTS, (prefs) => {
@@ -36,15 +37,9 @@ $('rateWarningEnabled').addEventListener('change', toggleRateDetails);
 $('save').addEventListener('click', () => {
   const t1 = parseInt($('threshold1').value);
   const t2 = parseInt($('threshold2').value);
-
-  if (t1 >= t2) {
-    alert('Warning threshold must be lower than the critical threshold.');
-    return;
-  }
-
+  if (t1 >= t2) { alert('Warning threshold must be lower than the critical threshold.'); return; }
   chrome.storage.sync.set({
-    threshold1: t1,
-    threshold2: t2,
+    threshold1: t1, threshold2: t2,
     soundEnabled: $('soundEnabled').checked,
     rateWarningEnabled: $('rateWarningEnabled').checked,
     rateWarningMinutes: parseInt($('rateWarningMinutes').value),
@@ -55,37 +50,59 @@ $('save').addEventListener('click', () => {
   });
 });
 
-// ── Email subscribe ───────────────────────────────────────────────────────────
+// ── Signup form ───────────────────────────────────────────────────────────────
 
-chrome.storage.local.get('subscribedEmail', ({ subscribedEmail }) => {
-  if (subscribedEmail) {
-    $('email-input').value = subscribedEmail;
-    $('subscribed-msg').classList.add('visible');
-    $('btn-subscribe').disabled = true;
-    $('btn-subscribe').textContent = 'Subscribed ✓';
-  }
+// Restore if already submitted
+chrome.storage.local.get('signupSubmitted', ({ signupSubmitted }) => {
+  if (signupSubmitted) showSuccess();
 });
 
-$('btn-subscribe').addEventListener('click', () => {
-  const email = $('email-input').value.trim();
-  if (!email || !email.includes('@')) {
-    $('email-input').focus();
+function showSuccess() {
+  $('signup-form').style.display = 'none';
+  $('form-success').classList.add('visible');
+}
+
+$('btn-submit').addEventListener('click', async () => {
+  const firstName = $('first-name').value.trim();
+  const lastName  = $('last-name').value.trim();
+  const email     = $('email').value.trim();
+  const zip       = $('zip').value.trim();
+
+  if (!firstName || !email || !email.includes('@')) {
+    $('email').focus();
     return;
   }
 
-  chrome.storage.local.set({ subscribedEmail: email });
+  $('btn-submit').disabled = true;
+  $('btn-submit').textContent = 'Submitting…';
+  $('form-error').classList.remove('visible');
 
-  // Open mailto so the user's email lands in your inbox
-  const subject = encodeURIComponent('Claude Usage Monitor — subscribe me to updates');
-  const body = encodeURIComponent(`Email: ${email}\n\nPlease add me to the Claude Usage Monitor update list.`);
-  window.open(`mailto:t@nyvp.com?subject=${subject}&body=${body}`);
+  try {
+    const res = await fetch(FORMSPREE_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify({
+        type: 'signup',
+        first_name: firstName,
+        last_name: lastName,
+        email,
+        zip,
+      }),
+    });
 
-  $('subscribed-msg').classList.add('visible');
-  $('btn-subscribe').disabled = true;
-  $('btn-subscribe').textContent = 'Subscribed ✓';
+    if (!res.ok) throw new Error('bad response');
+
+    chrome.storage.local.set({ signupSubmitted: true });
+    showSuccess();
+  } catch {
+    $('btn-submit').disabled = false;
+    $('btn-submit').textContent = 'Subscribe to updates';
+    $('form-error').classList.add('visible');
+  }
 });
 
-// Open feedback links in a new tab (extensions block target=_blank)
+// ── Feedback links (must open via chrome.tabs in extension context) ───────────
+
 ['link-bug', 'link-feature'].forEach(id => {
   $(id)?.addEventListener('click', (e) => {
     e.preventDefault();
