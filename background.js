@@ -1,10 +1,17 @@
 const ICON = chrome.runtime.getURL('icons/icon128.png');
 const MENU_BAR_URL = 'http://localhost:39571/usage';
-// Replace with your Formspree form ID — must match options.js
-const FORMSPREE_URL = 'https://formspree.io/f/xwvzzwwz';
 const MAX_HISTORY = 288; // 24h at 5-min granularity
 
 // ── Lifecycle ─────────────────────────────────────────────────────────────────
+
+function ensureAlarms() {
+  chrome.alarms.get('refreshHigh', (a) => {
+    if (!a) chrome.alarms.create('refreshHigh', { periodInMinutes: 5 });
+  });
+  chrome.alarms.get('refreshLow', (a) => {
+    if (!a) chrome.alarms.create('refreshLow', { periodInMinutes: 20 });
+  });
+}
 
 chrome.runtime.onInstalled.addListener(async ({ reason }) => {
   if (reason === 'install') {
@@ -17,21 +24,17 @@ chrome.runtime.onInstalled.addListener(async ({ reason }) => {
       rateWarningMinutes: 60,
     });
     chrome.tabs.create({ url: chrome.runtime.getURL('options.html?welcome=1') });
-    // Notify on every new install
-    fetch(FORMSPREE_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-      body: JSON.stringify({ type: 'install', timestamp: new Date().toISOString() }),
-    }).catch(() => {});
   }
   chrome.alarms.clearAll();
-  // High-frequency alarm: only polls when usage ≥ 60%
-  chrome.alarms.create('refreshHigh', { periodInMinutes: 5 });
-  // Low-frequency alarm: always polls
-  chrome.alarms.create('refreshLow', { periodInMinutes: 20 });
+  ensureAlarms();
 });
 
-// ── Alarms (adaptive polling) ─────────────────────────────────────────────────
+// Re-register alarms after browser restarts (service worker wakes fresh)
+chrome.runtime.onStartup.addListener(() => {
+  ensureAlarms();
+});
+
+// ── Alarms (adaptive polling + deferred cleanup) ──────────────────────────────
 
 chrome.alarms.onAlarm.addListener(async (alarm) => {
   if (alarm.name === 'refreshHigh') {
@@ -39,6 +42,11 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
     if ((getMax(usage) ?? 0) >= 60) await pollClaudeUsage();
   } else if (alarm.name === 'refreshLow') {
     await pollClaudeUsage();
+  } else if (alarm.name.startsWith('closeTab_')) {
+    const tabId = parseInt(alarm.name.split('_')[1], 10);
+    chrome.tabs.remove(tabId).catch(() => {});
+  } else if (alarm.name === 'closeOffscreen') {
+    chrome.offscreen.closeDocument().catch(() => {});
   }
 });
 
@@ -241,20 +249,21 @@ async function playAlertSound(severity) {
     duration: severity === 'critical' ? 0.6 : 0.3,
   }).catch(() => {});
 
-  setTimeout(() => chrome.offscreen.closeDocument().catch(() => {}), 3000);
+  chrome.alarms.create('closeOffscreen', { when: Date.now() + 4000 });
 }
 
 // ── Background polling ────────────────────────────────────────────────────────
 
 async function pollClaudeUsage() {
-  // Open a background tab to the usage page so the DOM scraper fires
-  // (active: false keeps it in the background without stealing focus)
+  // Open a background tab to the usage page so the DOM scraper fires.
+  // active:false keeps it in the background without stealing focus.
+  // Use an alarm to close it instead of setTimeout — alarms survive service worker dormancy.
   try {
     const tab = await chrome.tabs.create({
       url: 'https://claude.ai/settings/usage',
       active: false,
     });
-    setTimeout(() => chrome.tabs.remove(tab.id).catch(() => {}), 6000);
+    chrome.alarms.create(`closeTab_${tab.id}`, { when: Date.now() + 8000 });
   } catch {}
 }
 

@@ -4,7 +4,7 @@
 Claude Usage Monitor
 
 ## Short description (132 chars max — appears under extension name)
-Never lose work mid-prompt. Live usage bars, burn-rate warnings & history for Claude.ai. 100% local — no data leaves your browser.
+Never lose work mid-prompt. Live session & weekly usage bars, burn-rate alerts, and reset timers for Claude.ai — right in your toolbar.
 
 ---
 
@@ -40,18 +40,18 @@ Works with SwiftBar or xbar to show your highest usage % in the menu bar. Includ
 
 ---
 
-**PRIVACY — 100% LOCAL, ZERO TRACKING**
+**PRIVACY**
 
-This extension was designed from the ground up with privacy as the top priority:
+Your Claude usage data never leaves your browser. All usage data is stored locally in chrome.storage — never uploaded, never tracked, never shared.
 
-✅ No data is ever sent to any external server
-✅ No analytics, no telemetry, no advertising
+✅ Usage data stays 100% local — never sent externally
+✅ No analytics, no advertising
 ✅ No account required — works immediately after install
-✅ All usage data is stored locally in chrome.storage (sandboxed to your browser)
-✅ The optional menu bar server runs only on localhost (127.0.0.1)
 ✅ Full source code is open-source and publicly auditable on GitHub
 
-The extension only accesses claude.ai — the site you're already using. It reads the usage percentages displayed on your settings page and stores them locally, exactly like you would by reading the page yourself.
+Two small external events:
+• An anonymous install ping (timestamp only) is sent when you first install, so the developer knows how many people use the extension.
+• If you voluntarily fill out the "Stay in the Loop" contact form in Settings, your name, email, and zip are submitted so the developer can send product updates. This is entirely optional.
 
 ---
 
@@ -98,8 +98,7 @@ English
 4. Popup showing sparkline + heatmap
 
 ## Privacy policy URL
-Host privacy_policy.html somewhere (GitHub Pages or a public URL) and link it here.
-Example: https://tracecohen.github.io/claude-usage-monitor/privacy_policy.html
+https://tracecohentech.github.io/claude-usage-monitor/privacy_policy.html
 
 ## Single purpose description (for Web Store review)
-"This extension reads usage percentage data from the claude.ai/settings/usage page and stores it locally to display usage history, burn-rate projections, and threshold alerts. No data is collected or transmitted externally."
+"This extension reads usage percentage data from the claude.ai/settings/usage page and stores it locally to display usage history, burn-rate projections, and threshold alerts. An anonymous install ping and optional contact form submission may be sent to the developer."
