@@ -13,8 +13,17 @@ const $ = (id) => document.getElementById(id);
 
 // ── Welcome banner ────────────────────────────────────────────────────────────
 
-if (new URLSearchParams(location.search).get('welcome') === '1') {
+const isWelcome = new URLSearchParams(location.search).get('welcome') === '1';
+if (isWelcome) {
   $('welcome').classList.add('visible');
+  chrome.storage.local.set({ welcomeSeen: true });
+} else {
+  chrome.storage.local.get('welcomeSeen', ({ welcomeSeen }) => {
+    if (!welcomeSeen) {
+      $('welcome').classList.add('visible');
+      chrome.storage.local.set({ welcomeSeen: true });
+    }
+  });
 }
 
 // ── Settings ──────────────────────────────────────────────────────────────────

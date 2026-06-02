@@ -277,8 +277,32 @@ document.getElementById('gear').addEventListener('click', () => {
 });
 
 document.getElementById('btn-settings').addEventListener('click', () => {
-  chrome.tabs.create({ url: 'https://claude.ai/settings/usage' });
+  chrome.runtime.openOptionsPage();
   window.close();
+});
+
+document.getElementById('btn-copy').addEventListener('click', () => {
+  chrome.storage.local.get(['usage', 'lastUpdated'], ({ usage, lastUpdated }) => {
+    if (!usage) return;
+    const lines = ['Claude Usage Summary'];
+    const ago = lastUpdated ? Math.round((Date.now() - lastUpdated) / 60_000) : null;
+    if (ago !== null) lines.push(`Updated: ${ago === 0 ? 'just now' : ago + 'm ago'}`);
+    lines.push('');
+    const order = ['session', 'allModels', 'sonnet', 'opus'];
+    const labels = { session: 'Session', allModels: 'All Models', sonnet: 'Sonnet', opus: 'Opus' };
+    for (const k of order) {
+      if (!usage[k]) continue;
+      const p = Math.round(getPct(usage[k]));
+      const r = getReset(usage[k]);
+      lines.push(`${labels[k]}: ${p}%${r ? '  (' + r + ')' : ''}`);
+    }
+    navigator.clipboard.writeText(lines.join('\n')).then(() => {
+      const btn = document.getElementById('btn-copy');
+      btn.textContent = 'Copied ✓';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+    });
+  });
 });
 
 document.getElementById('btn-refresh').addEventListener('click', () => {

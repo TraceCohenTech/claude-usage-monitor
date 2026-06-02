@@ -154,6 +154,35 @@
       background: #1a1a1a; color: #fff; border-color: #1a1a1a;
     }
     .btn-primary:hover { background: #333; }
+    .btn-copy.copied { color: #16a34a; border-color: #16a34a; }
+
+    /* ── Dark mode ── */
+    @media (prefers-color-scheme: dark) {
+      body { background: #1a1a1a; color: #e5e7eb; }
+      header { border-bottom-color: #2d2d2d; }
+      header h1 { color: #f3f4f6; }
+      .gear-btn { color: #555; }
+      .gear-btn:hover { color: #aaa; }
+      .burn-banner { background: #431407; border-color: #7c2d12; color: #fca5a5; }
+      .section-title { color: #555; }
+      .spark-title { color: #555; }
+      .limit-name { color: #d1d5db; }
+      .bar-track { background: #374151; }
+      .reset-time { color: #555; }
+      .divider { border-top-color: #2d2d2d; }
+      .runway-rate { color: #6b7280; }
+      .runway-empty { color: #555; }
+      .spark-empty { color: #555; }
+      .no-data { color: #6b7280; }
+      .no-data strong { color: #9ca3af; }
+      footer { border-top-color: #2d2d2d; }
+      .timestamp { color: #555; }
+      .btn { background: #2d2d2d; border-color: #374151; color: #d1d5db; }
+      .btn:hover { background: #374151; }
+      .btn-primary { background: #f3f4f6; color: #111; border-color: #f3f4f6; }
+      .btn-primary:hover { background: #fff; }
+      .btn-copy.copied { color: #4ade80; border-color: #4ade80; }
+    }
   </style>
 </head>
 <body>
@@ -168,7 +197,8 @@
   <footer>
     <div class="timestamp" id="ts"></div>
     <div class="btn-row">
-      <button class="btn btn-primary" id="btn-settings">Open Settings</button>
+      <button class="btn btn-primary" id="btn-settings">Settings</button>
+      <button class="btn btn-copy" id="btn-copy" title="Copy usage summary">Copy</button>
       <button class="btn" id="btn-refresh">Refresh</button>
       <button class="btn" id="btn-feedback" title="Leave feedback">Feedback</button>
     </div>

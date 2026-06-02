@@ -268,15 +268,10 @@ async function playAlertSound(severity) {
 // ── Background polling ────────────────────────────────────────────────────────
 
 async function pollClaudeUsage() {
-  // Open a background tab to the usage page so the DOM scraper fires.
-  // active:false keeps it in the background without stealing focus.
-  // Use an alarm to close it instead of setTimeout — alarms survive service worker dormancy.
+  // Only reload an existing Claude tab — never silently create new ones
   try {
-    const tab = await chrome.tabs.create({
-      url: 'https://claude.ai/settings/usage',
-      active: false,
-    });
-    chrome.alarms.create(`closeTab_${tab.id}`, { when: Date.now() + 8000 });
+    const tabs = await chrome.tabs.query({ url: 'https://claude.ai/*' });
+    if (tabs.length) chrome.tabs.reload(tabs[0].id);
   } catch {}
 }
 
